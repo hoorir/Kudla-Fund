@@ -1,0 +1,56 @@
+---
+title: "Weekly Report"
+author: "Kudla Fund"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#### `r format(Sys.time(), '%B %d %Y')`
+
+The following analysis was conducted for winter, spring, and summer, 2018, starting from 01/02/`r format(Sys.time(), '%Y')` until `r format(Sys.time(), '%m/%d/%Y')`. 13-week treasury bill index was used as a proxy for interest rates (^IRX). Market movements were estimated using S&P 500 index (^GSPC). Financial data was retrieved from Yahoo! finance. 
+
+Over `r as.Date(format(Sys.time(), '%m/%d/%Y'), format = '%m/%d/%Y') - as.Date(paste("01/02/",format(Sys.time(), '%Y')), format = '%m/%d/%Y')` trading days, the fund managed to bring a total return of `r library(zoo); coredata(returns)[1]*100`%, compared to the S&P 500 index of `r library(zoo); SP500_AnnualReturn*100`%. We achieved an annualized Sharpe ratio of `r SharpeRatio`, which is significantly higher than market Sharpe ratio for the same period, `r SP500_Sharpe`.
+
+Our portfolio's beta was `r beta[1][1] `. Maximum drawdown was calculated to be ----%. Further information are provided in the following table and graphs.
+
+```{r echo=FALSE, results='asis'}
+
+library(knitr)
+vals = matrix(nrow=3, ncol=2)
+vals[1,1] = SP500_Sharpe
+vals[1,2] = SharpeRatio
+vals[2,1] = SP500_Volatility
+vals[2,2] = volatility
+vals[3,1] = SP500_AnnualReturn
+vals[3,2] = coredata(returns)[1]
+rownames(vals) <- c("Sharpe Ratio", "Annualized Volatility", "YTD Return")
+colnames(vals) <- c("SP500", "Portfolio")
+kable(vals, caption = "Portfolio Values")
+```
+
+# Returns Distribution
+
+```{r Returns Distribution, echo=FALSE}
+  qplot(CalculateDailyReturns(portfolio) * 100, geom = 'histogram', binwidth = .1) + xlab('Portfolio Returns Distribution (%)') +
+    # Create normal curve, adjusting for number of observations and binwidth
+    stat_function( 
+      fun = function(x, mean, sd, n, bw){ 
+        dnorm(x = x, mean = mean, sd = sd) * n * bw
+      }, 
+      args = c(mean = mean(CalculateDailyReturns(portfolio) * 100), sd = sd(CalculateDailyReturns(portfolio) * 100), n = length(CalculateDailyReturns(portfolio) * 100), bw = 0.1))
+```
+
+# Portfolio Value
+
+```{r Portfolio Value, echo=FALSE}
+
+plot(portValue)
+```
+
+#Frontier Analysis Graph
+```{r Frontier Analysis Graph, echo=FALSE}
+  EfficientPortfolio(portfolio)
+
+```
